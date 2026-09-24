@@ -1,22 +1,32 @@
 import { GoogleGenAI } from '@google/genai';
 
-function getGenAI(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY || '';
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      },
-    },
-  });
+function extractApiKey(req: any, body: any): string {
+  const headerKey = (req.headers && req.headers['x-gemini-api-key']) || '';
+  if (headerKey && typeof headerKey === 'string' && headerKey.trim()) return headerKey.trim();
+
+  const authHeader = (req.headers && req.headers.authorization) || '';
+  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7).trim();
+    if (token) return token;
+  }
+
+  if (body && typeof body === 'object' && body.apiKey && typeof body.apiKey === 'string') {
+    if (body.apiKey.trim()) return body.apiKey.trim();
+  }
+
+  return (
+    process.env.GEMINI_API_KEY ||
+    process.env.API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    ''
+  ).trim();
 }
 
 export default async function handler(req: any, res: any) {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-gemini-api-key');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -32,6 +42,14 @@ export default async function handler(req: any, res: any) {
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Messages array is required.' });
+    }
+
+    const apiKey = extractApiKey(req, body);
+    if (!apiKey) {
+      return res.status(401).json({
+        error: 'Gemini API key is not configured. Please add your API key in Settings or set GEMINI_API_KEY in Vercel environment variables.',
+        needsKey: true,
+      });
     }
 
     // Determine model based on task complexity
@@ -69,7 +87,14 @@ ${contextData ? `User Context: ${JSON.stringify(contextData)}` : ''}
 Help the user accurately balance their weekly hours and explain any timesheet discrepancies.`;
     }
 
-    const ai = getGenAI();
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
 
     // Format messages into Google Gen AI contents array
     const contents = messages.map((m: { role: string; content: string }) => ({
@@ -96,7 +121,7 @@ Help the user accurately balance their weekly hours and explain any timesheet di
   } catch (error: any) {
     console.error('Error in Vercel /api/chat:', error);
     return res.status(500).json({
-      error: error.message || 'Failed to process chat request',
+      error: error.message || 'Failed to process chat message',
     });
   }
 }

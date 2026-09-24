@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trip, Split, UserSettings, ActivityCategory, BusinessType } from '../types';
 import { X, Plus, Trash2, Gauge, AlertCircle, Calendar, Clock, Car, Building2, Tag, MapPin, Navigation, Sparkles, ExternalLink, Check } from 'lucide-react';
+import { lookupMapsRoute } from '../lib/geminiMapsService';
 
 interface TripModalProps {
   isOpen: boolean;
@@ -134,16 +135,7 @@ export const TripModal: React.FC<TripModalProps> = ({
     setMapsLoading(true);
     setMapsError(null);
     try {
-      const res = await fetch('/api/maps/lookup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ origin, destination }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Maps lookup failed');
-      }
-      const data = await res.json();
+      const data = await lookupMapsRoute({ origin, destination });
       setMapsResult(data);
     } catch (err: any) {
       setMapsError(err.message || 'Error fetching Maps route');

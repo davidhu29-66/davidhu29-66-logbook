@@ -1,25 +1,31 @@
 import { GoogleGenAI } from '@google/genai';
 
-let aiClient: GoogleGenAI | null = null;
-function getGenAI(): GoogleGenAI {
-  if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY || '';
-    aiClient = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        },
-      },
-    });
+function extractApiKey(req: any, body: any): string {
+  const headerKey = (req.headers && req.headers['x-gemini-api-key']) || '';
+  if (headerKey && typeof headerKey === 'string' && headerKey.trim()) return headerKey.trim();
+
+  const authHeader = (req.headers && req.headers.authorization) || '';
+  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7).trim();
+    if (token) return token;
   }
-  return aiClient;
+
+  if (body && typeof body === 'object' && body.apiKey && typeof body.apiKey === 'string') {
+    if (body.apiKey.trim()) return body.apiKey.trim();
+  }
+
+  return (
+    process.env.GEMINI_API_KEY ||
+    process.env.API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    ''
+  ).trim();
 }
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-gemini-api-key');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -37,11 +43,26 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Origin, destination, or query is required.' });
     }
 
+    const apiKey = extractApiKey(req, body);
+    if (!apiKey) {
+      return res.status(401).json({
+        error: 'Gemini API key is not configured. Please add your API key in Settings or set GEMINI_API_KEY in Vercel environment variables.',
+        needsKey: true,
+      });
+    }
+
     const promptText = query
       ? `Provide accurate location details, full address, key travel route information, and estimated driving distance from Google Maps for: ${query}. Be concise, practical for a field technician/driver logging business mileage.`
       : `Estimate the driving route, distance in kilometres, and travel details between origin "${origin || 'Home'}" and destination "${destination}". Provide verified location details from Google Maps for "${destination}". Format key info clearly for a vehicle travel logbook.`;
 
-    const ai = getGenAI();
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
 
     const config: any = {
       tools: [{ googleMaps: {} }],

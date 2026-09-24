@@ -6,8 +6,28 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-function getGenAI(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY || '';
+function extractApiKey(req: express.Request): string {
+  const headerKey = (req.headers['x-gemini-api-key'] as string) || '';
+  if (headerKey.trim()) return headerKey.trim();
+
+  const authHeader = req.headers.authorization || '';
+  if (authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7).trim();
+    if (token) return token;
+  }
+
+  const bodyKey = (req.body && typeof req.body === 'object' && req.body.apiKey) || '';
+  if (bodyKey && typeof bodyKey === 'string' && bodyKey.trim()) return bodyKey.trim();
+
+  return (
+    process.env.GEMINI_API_KEY ||
+    process.env.API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    ''
+  ).trim();
+}
+
+function getGenAI(apiKey: string): GoogleGenAI {
   return new GoogleGenAI({
     apiKey,
     httpOptions: {
@@ -47,7 +67,15 @@ async function startServer() {
         ? `Provide accurate location details, full address, key travel route information, and estimated driving distance from Google Maps for: ${query}. Be concise, practical for a field technician/driver logging business mileage.`
         : `Estimate the driving route, distance in kilometres, and travel details between origin "${origin || 'Home'}" and destination "${destination}". Provide verified location details from Google Maps for "${destination}". Format key info clearly for a vehicle travel logbook.`;
 
-      const ai = getGenAI();
+      const apiKey = extractApiKey(req);
+      if (!apiKey) {
+        return res.status(401).json({
+          error: 'Gemini API key is not configured. Please add your API key in Settings or set GEMINI_API_KEY in the server environment.',
+          needsKey: true,
+        });
+      }
+
+      const ai = getGenAI(apiKey);
 
       const config: any = {
         tools: [{ googleMaps: {} }],
@@ -118,7 +146,14 @@ async function startServer() {
       }
 
       const sitesToVerify = destinations.slice(0, 5).join(', ');
-      const ai = getGenAI();
+      const apiKey = extractApiKey(req);
+      if (!apiKey) {
+        return res.status(401).json({
+          error: 'Gemini API key is not configured. Please add your API key in Settings or set GEMINI_API_KEY in the server environment.',
+          needsKey: true,
+        });
+      }
+      const ai = getGenAI(apiKey);
 
       const promptText = `For these field service destinations in South Africa / Western Cape: ${sitesToVerify}.
 Provide the verified location address, landmark details, and approximate driving distance/route context from Google Maps.`;
@@ -204,7 +239,15 @@ ${contextData ? `User Context: ${JSON.stringify(contextData)}` : ''}
 Help the user accurately balance their weekly hours and explain any timesheet discrepancies.`;
       }
 
-      const ai = getGenAI();
+      const apiKey = extractApiKey(req);
+      if (!apiKey) {
+        return res.status(401).json({
+          error: 'Gemini API key is not configured. Please add your API key in Settings or set GEMINI_API_KEY in the server environment.',
+          needsKey: true,
+        });
+      }
+
+      const ai = getGenAI(apiKey);
 
       // Format messages into Google Gen AI contents array
       const contents = messages.map((m: { role: string; content: string }) => ({

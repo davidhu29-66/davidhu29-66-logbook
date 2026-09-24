@@ -22,11 +22,14 @@ import {
   ShieldCheck,
   Globe,
   ExternalLink,
+  Key,
+  Sparkles,
 } from 'lucide-react';
 import { TemplateManagerModal } from './TemplateManagerModal';
 import { getCustomExcelTemplate } from '../lib/templateStorage';
 import { DEFAULT_SETTINGS } from '../lib/storage';
 import { User as FirebaseUser } from 'firebase/auth';
+import { getStoredClientKey, saveClientKey } from '../lib/geminiMapsService';
 
 interface SettingsViewProps {
   settings: UserSettings;
@@ -79,6 +82,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [customTemplateMeta, setCustomTemplateMeta] = useState<CustomExcelTemplate | null>(null);
+
+  const [geminiKeyInput, setGeminiKeyInput] = useState(getStoredClientKey());
+  const [keySavedMessage, setKeySavedMessage] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -691,6 +697,88 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <ExternalLink className="w-3.5 h-3.5" />
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Google Gemini AI & Google Maps API Key Card */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
+            <Key className="w-4 h-4 text-amber-400" />
+            Google Gemini AI & Google Maps Platform Key
+          </h3>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">
+            Section 8(1) Route Grounding & AI Assistant
+          </span>
+        </div>
+
+        <p className="text-xs text-slate-300 leading-relaxed">
+          Google Maps route verification and AI Dispatch use Google Gemini with Google Maps Grounding.
+          If hosting on Vercel or Node.js, configure <code className="text-amber-300 bg-amber-950/40 px-1 py-0.5 rounded font-mono">GEMINI_API_KEY</code> in environment variables.
+          If running on GitHub Pages or a client-only static deployment, you can save your Google AI Studio API key directly here.
+        </p>
+
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <input
+                type="password"
+                value={geminiKeyInput}
+                onChange={(e) => setGeminiKeyInput(e.target.value)}
+                placeholder="Paste your Gemini API key (AIzaSy...)"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2 text-xs font-mono text-slate-100 placeholder:text-slate-500 focus:border-amber-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  saveClientKey(geminiKeyInput);
+                  setKeySavedMessage(true);
+                  showToast('Gemini API key saved in browser storage.');
+                  setTimeout(() => setKeySavedMessage(false), 3000);
+                }}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all shadow-md hover:scale-105"
+              >
+                Save Key
+              </button>
+              {geminiKeyInput && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGeminiKeyInput('');
+                    saveClientKey('');
+                    showToast('Gemini API key cleared from browser storage.');
+                  }}
+                  className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>
+                {geminiKeyInput ? (
+                  <span className="text-emerald-400 font-medium">Custom Gemini API key active in browser</span>
+                ) : (
+                  <span>Using server environment variable proxy (or regional offline fallback)</span>
+                )}
+              </span>
+            </div>
+            <a
+              href="https://aistudio.google.com/app/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-amber-400 hover:text-amber-300 flex items-center gap-1 text-[11px] underline"
+            >
+              <span>Get API Key from Google AI Studio</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
         </div>
       </div>
 
