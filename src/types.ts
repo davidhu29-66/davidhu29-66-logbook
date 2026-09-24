@@ -82,6 +82,7 @@ export interface UserSettings {
   idNumber?: string; // Taxpayer ID or Passport Number
   vehicleCostPrice?: number; // Vehicle purchase / retail value for SARS
   employerName?: string; // Employer / Company Name
+  baseAddress?: string; // Base / Home Address for Maps calculations
 }
 
 export interface CellMappingConfig {

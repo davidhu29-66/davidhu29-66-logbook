@@ -73,6 +73,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [idNumber, setIdNumber] = useState(settings.idNumber || '');
   const [vehicleCostPrice, setVehicleCostPrice] = useState(settings.vehicleCostPrice ? String(settings.vehicleCostPrice) : '');
   const [employerName, setEmployerName] = useState(settings.employerName || '');
+  const [baseAddress, setBaseAddress] = useState(settings.baseAddress || '');
 
   const [clients, setClients] = useState<string[]>(settings.clients || []);
   const [newClient, setNewClient] = useState('');
@@ -94,6 +95,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     });
   }, [settings.templateMode]);
 
+  useEffect(() => {
+    setDriverName(settings.driverName || '');
+    setRegion(settings.region || '');
+    setVehicleName(settings.vehicleName || '');
+    setVehicleRego(settings.vehicleRego || '');
+    setCurrentOdometer(settings.currentOdometer || 0);
+    setTaxReferenceNo(settings.taxReferenceNo || '');
+    setIdNumber(settings.idNumber || '');
+    setVehicleCostPrice(settings.vehicleCostPrice ? String(settings.vehicleCostPrice) : '');
+    setEmployerName(settings.employerName || '');
+    setBaseAddress(settings.baseAddress || '');
+    setClients(settings.clients || []);
+    setJobNumbers(settings.jobNumbers || []);
+  }, [settings]);
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
@@ -112,6 +128,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       idNumber: idNumber.trim(),
       vehicleCostPrice: vehicleCostPrice ? Number(vehicleCostPrice) : undefined,
       employerName: employerName.trim(),
+      baseAddress: baseAddress.trim(),
       clients,
       jobNumbers,
     };
@@ -301,6 +318,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               placeholder="e.g. 1ABC-889"
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
             />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-blue-400" />
+              Default Base Address / Start Location (Home/Office)
+            </label>
+            <input
+              type="text"
+              value={baseAddress}
+              onChange={(e) => setBaseAddress(e.target.value)}
+              placeholder="e.g. 77 Somerset Rd, Green Point, Cape Town, 8005"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Used as the physical address when your trip origin/destination is logged as "Home", "Office", or "Base" to calculate extremely accurate driving distances.
+            </p>
           </div>
 
           <div className="md:col-span-2">

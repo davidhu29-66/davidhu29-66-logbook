@@ -250,7 +250,7 @@ export const SarsLogbookView: React.FC<SarsLogbookViewProps> = ({
               ID / Passport Number
             </span>
             <span className="font-mono font-bold text-slate-200 print:text-black">
-              {settings.idNumber || '8804125089083'}
+              {settings.idNumber || 'Not configured'}
             </span>
           </div>
 
@@ -259,7 +259,7 @@ export const SarsLogbookView: React.FC<SarsLogbookViewProps> = ({
               SARS Tax Reference No
             </span>
             <span className="font-mono font-bold text-blue-400 print:text-black">
-              {settings.taxReferenceNo || '9482716304'}
+              {settings.taxReferenceNo || 'Not configured'}
             </span>
           </div>
 
@@ -297,7 +297,7 @@ export const SarsLogbookView: React.FC<SarsLogbookViewProps> = ({
             <span className="font-mono text-slate-300 print:text-black">
               {settings.vehicleCostPrice
                 ? `R ${settings.vehicleCostPrice.toLocaleString()}`
-                : 'R 385,000'}
+                : 'Not configured'}
             </span>
           </div>
 

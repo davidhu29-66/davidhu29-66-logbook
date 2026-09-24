@@ -96,24 +96,37 @@ export const TripModal: React.FC<TripModalProps> = ({
       const currentH = String(now.getHours()).padStart(2, '0');
       const currentM = String(now.getMinutes()).padStart(2, '0');
 
+      // Find chronologically last trip to auto-populate origin and starting mileage
+      let lastTrip: Trip | null = null;
+      if (trips && trips.length > 0) {
+        const sorted = [...trips].sort((a, b) => {
+          if (a.date !== b.date) return a.date.localeCompare(b.date);
+          return a.timeOut.localeCompare(b.timeOut);
+        });
+        lastTrip = sorted[sorted.length - 1];
+      }
+
+      const defaultOdo = lastTrip ? lastTrip.mileageIn : (suggestedOdometerOut || settings.currentOdometer || 0);
+      const defaultOrigin = lastTrip ? lastTrip.destination : (settings.region || '');
+
       setDate(today);
       setTimeOut(`${currentH}:${currentM}`);
       setTimeIn(`${currentH}:${currentM}`);
-      setMileageOut(suggestedOdometerOut || settings.currentOdometer || 0);
-      setMileageIn(suggestedOdometerOut || settings.currentOdometer || 0);
+      setMileageOut(defaultOdo);
+      setMileageIn(defaultOdo);
       setCategory(defaultCategory);
       setBusinessType(defaultBusinessType);
       setClient(defaultBusinessType === 'admin' ? 'Admin' : (settings.clients[0] || ''));
       setJobNumber(defaultBusinessType === 'admin' ? '' : (settings.jobNumbers[0] || ''));
       setNotes('');
       setVehicle(settings.vehicleName || '');
-      setOrigin(settings.region || '');
+      setOrigin(defaultOrigin || '');
       setDestination(defaultBusinessType === 'admin' ? 'Admin' : (settings.clients[0] ? `${settings.clients[0]} Site` : ''));
       setEnableSplits(false);
       setSplits([]);
     }
     setError(null);
-  }, [isOpen, initialTrip, suggestedOdometerOut, settings, defaultCategory, defaultBusinessType]);
+  }, [isOpen, initialTrip, suggestedOdometerOut, settings, defaultCategory, defaultBusinessType, trips]);
 
   if (!isOpen) return null;
 
@@ -147,7 +160,11 @@ export const TripModal: React.FC<TripModalProps> = ({
     setMapsLoading(true);
     setMapsError(null);
     try {
-      const data = await lookupMapsRoute({ origin, destination });
+      const data = await lookupMapsRoute({ 
+        origin, 
+        destination,
+        baseAddress: settings.baseAddress,
+      });
       setMapsResult(data);
     } catch (err: any) {
       setMapsError(err.message || 'Error fetching Maps route');
@@ -344,33 +361,56 @@ export const TripModal: React.FC<TripModalProps> = ({
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                 <Gauge className="w-4 h-4 text-blue-400" />
-                Odometer Readings (KM)
+                Odometer & Distance Calculations (KM)
               </span>
               <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                Distance: {totalDistance} KM
+                Calculated: {totalDistance} KM
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Start (Mileage Out)</label>
+                <label className="block text-[10px] text-slate-400 mb-1 font-medium">Start (Odo Out)</label>
                 <input
                   type="number"
                   step="1"
                   required
-                  value={mileageOut}
-                  onChange={(e) => setMileageOut(Number(e.target.value))}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
+                  value={mileageOut || ''}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setMileageOut(val);
+                    // Adjust finish odometer to maintain distance if previously entered, or set same if first entry
+                    setMileageIn(val + totalDistance);
+                  }}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 font-mono text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Finish (Mileage In)</label>
+                <label className="block text-[10px] text-blue-300 mb-1 font-semibold">Trip Distance</label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={totalDistance || ''}
+                  onChange={(e) => {
+                    const dist = Math.max(0, Number(e.target.value));
+                    setMileageIn(mileageOut + dist);
+                  }}
+                  placeholder="Direct KM"
+                  className="w-full rounded-lg border border-blue-500/50 bg-blue-950/40 px-2 py-1.5 font-mono text-sm font-bold text-blue-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1 font-medium">Finish (Odo In)</label>
                 <input
                   type="number"
                   step="1"
                   required
-                  value={mileageIn}
-                  onChange={(e) => setMileageIn(Number(e.target.value))}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
+                  value={mileageIn || ''}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setMileageIn(val);
+                  }}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 font-mono text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                 />
               </div>
             </div>

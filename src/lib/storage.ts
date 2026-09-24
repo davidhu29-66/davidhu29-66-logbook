@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   idNumber: '',
   vehicleCostPrice: undefined,
   employerName: '',
+  baseAddress: '',
   clients: [],
   jobNumbers: [],
   sites: [],

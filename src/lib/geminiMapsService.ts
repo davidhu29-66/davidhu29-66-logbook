@@ -20,6 +20,16 @@ export interface MapsLookupParams {
   destination?: string;
   query?: string;
   userLocation?: { latitude: number; longitude: number } | null;
+  baseAddress?: string;
+}
+
+function resolveAddress(addr: string | undefined, baseAddress?: string): string {
+  if (!addr) return 'Home';
+  const lowered = addr.trim().toLowerCase();
+  if (baseAddress && baseAddress.trim() && (lowered === 'home' || lowered === 'office' || lowered === 'base' || lowered === 'depot' || lowered === 'work')) {
+    return `${addr.trim()} (${baseAddress.trim()})`;
+  }
+  return addr.trim();
 }
 
 // Known Western Cape & South Africa reference landmarks for smart offline estimation
@@ -116,11 +126,14 @@ async function callDirectClientMaps(
   params: MapsLookupParams,
   apiKey: string
 ): Promise<MapsLookupResult> {
-  const { origin, destination, query, userLocation } = params;
+  const { origin, destination, query, userLocation, baseAddress } = params;
+
+  const resolvedOrigin = resolveAddress(origin, baseAddress);
+  const resolvedDestination = resolveAddress(destination, baseAddress);
 
   const promptText = query
-    ? `Provide accurate location details, full address, key travel route information, and estimated driving distance from Google Maps for: ${query}. Be concise, practical for a field technician/driver logging business mileage.`
-    : `Estimate the driving route, distance in kilometres, and travel details between origin "${origin || 'Home'}" and destination "${destination}". Provide verified location details from Google Maps for "${destination}". Format key info clearly for a vehicle travel logbook.`;
+    ? `Provide accurate location details, full address, key travel route information, and estimated driving distance from Google Maps for: ${query}. Be concise, practical for a field technician/driver logging business mileage. At the very end, output the single exact distance value in this exact format: [Distance: X.Y km]`
+    : `Estimate the driving route, distance in kilometres, and travel details between origin "${resolvedOrigin}" and destination "${resolvedDestination}". Provide verified location details from Google Maps for "${resolvedDestination}". Format key info clearly for a vehicle travel logbook. At the very end, output the single exact total driving distance value in this exact format: [Distance: X.Y km]`;
 
   const ai = new GoogleGenAI({
     apiKey,
@@ -169,9 +182,16 @@ async function callDirectClientMaps(
   }
 
   let estimatedKm: number | null = null;
-  const kmMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:km|kilometres|kilometers)/i);
-  if (kmMatch) {
-    estimatedKm = parseFloat(kmMatch[1]);
+  // Try pattern distance tag first
+  const distanceMatch = text.match(/\[Distance:\s*(\d+(?:\.\d+)?)\s*km\]/i);
+  if (distanceMatch) {
+    estimatedKm = parseFloat(distanceMatch[1]);
+  } else {
+    // fallback
+    const kmMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:km|kilometres|kilometers)/i);
+    if (kmMatch) {
+      estimatedKm = parseFloat(kmMatch[1]);
+    }
   }
 
   return {
