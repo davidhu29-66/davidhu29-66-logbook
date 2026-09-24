@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "UserProfile": {
+      "collection": "users",
+      "fields": {
+        "id": { "type": "string", "description": "User ID matching auth.uid" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Full display name" },
+        "photoURL": { "type": "string", "description": "Avatar URL" },
+        "createdAt": { "type": "string", "description": "ISO timestamp created" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp updated" }
+      }
+    },
+    "Trip": {
+      "collection": "users/{userId}/trips",
+      "fields": {
+        "id": { "type": "string", "description": "Unique trip ID" },
+        "date": { "type": "string", "description": "Trip date YYYY-MM-DD" },
+        "timeOut": { "type": "string", "description": "Departure time HH:MM" },
+        "timeIn": { "type": "string", "description": "Arrival time HH:MM" },
+        "mileageOut": { "type": "number", "description": "Starting odometer" },
+        "mileageIn": { "type": "number", "description": "Ending odometer" },
+        "category": { "type": "string", "description": "business or private" },
+        "businessType": { "type": "string", "description": "chargeable, admin, etc." },
+        "client": { "type": "string", "description": "Client name" },
+        "jobNumber": { "type": "string", "description": "Job/project number" },
+        "notes": { "type": "string", "description": "Trip purpose or destination notes" },
+        "origin": { "type": "string", "description": "Origin location" },
+        "destination": { "type": "string", "description": "Destination address" },
+        "vehicle": { "type": "string", "description": "Vehicle description" },
+        "status": { "type": "string", "description": "completed, active, or drafted" },
+        "splits": { "type": "array", "description": "Array of trip attribution splits" }
+      }
+    },
+    "WorkSession": {
+      "collection": "users/{userId}/sessions",
+      "fields": {
+        "id": { "type": "string", "description": "Unique session ID" },
+        "date": { "type": "string", "description": "Session date YYYY-MM-DD" },
+        "timeIn": { "type": "string", "description": "Work start time HH:MM" },
+        "timeOut": { "type": "string", "description": "Work finish time HH:MM" },
+        "category": { "type": "string", "description": "business or private" },
+        "businessType": { "type": "string", "description": "chargeable, admin, etc." },
+        "client": { "type": "string", "description": "Client name" },
+        "jobNumber": { "type": "string", "description": "Job/project number" },
+        "notes": { "type": "string", "description": "Work task notes" },
+        "breaks": { "type": "array", "description": "Lunch and rest break intervals" }
+      }
+    },
+    "UserSettings": {
+      "collection": "users/{userId}/settings",
+      "fields": {
+        "driverName": { "type": "string", "description": "Driver name" },
+        "vehicleName": { "type": "string", "description": "Vehicle make/model" },
+        "vehicleRego": { "type": "string", "description": "License registration" },
+        "currentOdometer": { "type": "number", "description": "Latest odometer reading" },
+        "clients": { "type": "array", "description": "List of client names" },
+        "jobNumbers": { "type": "array", "description": "List of job numbers" },
+        "taxReferenceNo": { "type": "string", "description": "SARS tax reference" },
+        "idNumber": { "type": "string", "description": "ID number" },
+        "employerName": { "type": "string", "description": "Employer name" },
+        "hourlyRate": { "type": "number", "description": "Chargeable hourly billing rate" }
+      }
+    }
+  }
+}

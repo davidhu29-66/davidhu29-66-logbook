@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="100" fill="#020617"/>
+  <!-- Central four-colored dynamic swooshes -->
+  <g transform="translate(256,256)">
+    <!-- Top-Left Blue Swoosh -->
+    <path d="M -20,-15 C -45,-90 -95,-130 -140,-130 C -170,-130 -190,-100 -180,-70 C -170,-40 -120,-30 -80,-10 C -50,5 -30,10 -15,5 Z" fill="#1e3a8a" transform="rotate(-30)"/>
+    <path d="M 0,-20 C -25,-85 -70,-155 -115,-165 C -150,-170 -175,-145 -165,-110 C -150,-60 -95,-40 -50,-10 Z" fill="#1d4ed8"/>
+    <!-- Top-Right Green Swoosh -->
+    <path d="M 20,-10 C 70,-40 120,-75 145,-125 C 165,-160 140,-185 105,-180 C 65,-170 30,-120 15,-70 C 5,-35 5,-15 15,-5 Z" fill="#16a34a" transform="rotate(65)"/>
+    <path d="M 15,-5 C 75,-30 135,-60 160,-110 C 180,-145 155,-175 120,-170 C 80,-160 40,-115 20,-65 Z" fill="#22c55e" transform="rotate(75)"/>
+    <!-- Bottom-Right Red Swoosh -->
+    <path d="M 15,15 C 65,45 110,85 130,135 C 150,175 120,195 85,185 C 45,170 20,120 0,70 Z" fill="#dc2626" transform="rotate(160)"/>
+    <path d="M 10,15 C 50,60 95,115 110,160 C 125,200 90,215 60,200 C 25,180 5,125 -5,75 Z" fill="#ef4444" transform="rotate(170)"/>
+    <!-- Bottom-Left Yellow/Amber Swoosh -->
+    <path d="M -15,10 C -60,40 -115,75 -145,120 C -170,160 -140,190 -105,180 C -65,165 -30,115 -10,65 Z" fill="#f59e0b" transform="rotate(255)"/>
+    <path d="M -10,10 C -55,45 -105,90 -135,135 C -160,170 -130,195 -95,185 C -55,170 -20,120 -5,70 Z" fill="#eab308" transform="rotate(265)"/>
+    <!-- Central smooth hub -->
+    <circle cx="0" cy="0" r="14" fill="#020617"/>
+  </g>
+</svg>
