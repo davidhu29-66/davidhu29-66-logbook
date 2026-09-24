@@ -26,6 +26,24 @@ export const TripsView: React.FC<TripsViewProps> = ({
 }) => {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<'all' | 'chargeable' | 'admin' | 'private'>('all');
+  const [selectedClient, setSelectedClient] = useState<string>('all');
+  const [selectedJob, setSelectedJob] = useState<string>('all');
+
+  const uniqueClients = Array.from(
+    new Set(
+      trips
+        .flatMap((t) => [t.client, ...(t.splits?.map((s) => s.client) || [])])
+        .filter((c): c is string => Boolean(c && c.trim() && c !== 'Admin'))
+    )
+  ).sort();
+
+  const uniqueJobs = Array.from(
+    new Set(
+      trips
+        .flatMap((t) => [t.jobNumber, ...(t.splits?.map((s) => s.jobNumber) || [])])
+        .filter((j): j is string => Boolean(j && j.trim()))
+    )
+  ).sort();
 
   // Sort trips descending by date and time
   const sortedTrips = [...trips].sort((a, b) => {
@@ -38,6 +56,18 @@ export const TripsView: React.FC<TripsViewProps> = ({
     if (filterCategory === 'chargeable' && (t.category !== 'business' || t.businessType !== 'chargeable')) return false;
     if (filterCategory === 'admin' && (t.category !== 'business' || t.businessType !== 'admin')) return false;
     if (filterCategory === 'private' && t.category !== 'private') return false;
+
+    if (selectedClient !== 'all') {
+      const matchMainClient = t.client === selectedClient;
+      const matchSplitClient = t.splits?.some((s) => s.client === selectedClient);
+      if (!matchMainClient && !matchSplitClient) return false;
+    }
+
+    if (selectedJob !== 'all') {
+      const matchMainJob = t.jobNumber === selectedJob;
+      const matchSplitJob = t.splits?.some((s) => s.jobNumber === selectedJob);
+      if (!matchMainJob && !matchSplitJob) return false;
+    }
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -136,7 +166,7 @@ export const TripsView: React.FC<TripsViewProps> = ({
       </div>
 
       {/* Search and Filters Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -148,22 +178,58 @@ export const TripsView: React.FC<TripsViewProps> = ({
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto">
-          <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0 mr-1" />
-          {(['all', 'chargeable', 'admin', 'private'] as const).map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setFilterCategory(cat)}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg capitalize transition-colors ${
-                filterCategory === cat
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Client Filter Dropdown */}
+          {uniqueClients.length > 0 && (
+            <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1">
+              <span className="text-[10px] uppercase font-bold text-slate-500">Client:</span>
+              <select
+                value={selectedClient}
+                onChange={(e) => setSelectedClient(e.target.value)}
+                className="bg-transparent text-xs text-slate-200 border-none outline-none font-medium cursor-pointer"
+              >
+                <option value="all" className="bg-slate-900 text-slate-200">All Clients ({uniqueClients.length})</option>
+                {uniqueClients.map((c) => (
+                  <option key={c} value={c} className="bg-slate-900 text-slate-200">{c}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Job Number Filter Dropdown */}
+          {uniqueJobs.length > 0 && (
+            <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1">
+              <span className="text-[10px] uppercase font-bold text-slate-500">Job:</span>
+              <select
+                value={selectedJob}
+                onChange={(e) => setSelectedJob(e.target.value)}
+                className="bg-transparent text-xs text-slate-200 border-none outline-none font-medium cursor-pointer"
+              >
+                <option value="all" className="bg-slate-900 text-slate-200">All Jobs ({uniqueJobs.length})</option>
+                {uniqueJobs.map((j) => (
+                  <option key={j} value={j} className="bg-slate-900 text-slate-200">{j}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1">
+            <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0 mr-0.5" />
+            {(['all', 'chargeable', 'admin', 'private'] as const).map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setFilterCategory(cat)}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg capitalize transition-colors ${
+                  filterCategory === cat
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserSettings, Trip, WorkSession, CustomExcelTemplate } from '../types';
 import {
   Settings,
@@ -81,6 +81,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [jobNumbers, setJobNumbers] = useState<string[]>(settings.jobNumbers || []);
   const [newJob, setNewJob] = useState('');
 
+  const [sites, setSites] = useState<string[]>(settings.sites || []);
+  const [newSite, setNewSite] = useState('');
+
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [customTemplateMeta, setCustomTemplateMeta] = useState<CustomExcelTemplate | null>(null);
 
@@ -88,6 +91,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [keySavedMessage, setKeySavedMessage] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const initialLoadDone = useRef(false);
 
   useEffect(() => {
     getCustomExcelTemplate().then((res) => {
@@ -96,18 +100,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   }, [settings.templateMode]);
 
   useEffect(() => {
-    setDriverName(settings.driverName || '');
-    setRegion(settings.region || '');
-    setVehicleName(settings.vehicleName || '');
-    setVehicleRego(settings.vehicleRego || '');
-    setCurrentOdometer(settings.currentOdometer || 0);
-    setTaxReferenceNo(settings.taxReferenceNo || '');
-    setIdNumber(settings.idNumber || '');
-    setVehicleCostPrice(settings.vehicleCostPrice ? String(settings.vehicleCostPrice) : '');
-    setEmployerName(settings.employerName || '');
-    setBaseAddress(settings.baseAddress || '');
-    setClients(settings.clients || []);
-    setJobNumbers(settings.jobNumbers || []);
+    if (!initialLoadDone.current) {
+      setDriverName(settings.driverName || '');
+      setRegion(settings.region || '');
+      setVehicleName(settings.vehicleName || '');
+      setVehicleRego(settings.vehicleRego || '');
+      setCurrentOdometer(settings.currentOdometer || 0);
+      setTaxReferenceNo(settings.taxReferenceNo || '');
+      setIdNumber(settings.idNumber || '');
+      setVehicleCostPrice(settings.vehicleCostPrice ? String(settings.vehicleCostPrice) : '');
+      setEmployerName(settings.employerName || '');
+      setBaseAddress(settings.baseAddress || '');
+      setClients(settings.clients || []);
+      setJobNumbers(settings.jobNumbers || []);
+      setSites(settings.sites || []);
+      initialLoadDone.current = true;
+    }
   }, [settings]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -115,23 +123,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setTimeout(() => setToast(null), 4000);
   };
 
+  const getCurrentSettingsPayload = (overrides?: Partial<UserSettings>): UserSettings => ({
+    ...settings,
+    driverName: driverName.trim(),
+    region: region.trim(),
+    vehicleName: vehicleName.trim(),
+    vehicleRego: vehicleRego.trim(),
+    currentOdometer: Number(currentOdometer) || 0,
+    taxReferenceNo: taxReferenceNo.trim(),
+    idNumber: idNumber.trim(),
+    vehicleCostPrice: vehicleCostPrice ? Number(vehicleCostPrice) : undefined,
+    employerName: employerName.trim(),
+    baseAddress: baseAddress.trim(),
+    clients,
+    jobNumbers,
+    sites,
+    ...overrides,
+  });
+
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    const updated: UserSettings = {
-      ...settings,
-      driverName,
-      region,
-      vehicleName,
-      vehicleRego,
-      currentOdometer: Number(currentOdometer),
-      taxReferenceNo: taxReferenceNo.trim(),
-      idNumber: idNumber.trim(),
-      vehicleCostPrice: vehicleCostPrice ? Number(vehicleCostPrice) : undefined,
-      employerName: employerName.trim(),
-      baseAddress: baseAddress.trim(),
-      clients,
-      jobNumbers,
-    };
+    const updated = getCurrentSettingsPayload();
     onSaveSettings(updated);
     showToast('Driver profile and SARS settings saved successfully.');
   };
@@ -141,13 +153,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const next = [...clients, newClient.trim()];
     setClients(next);
     setNewClient('');
-    onSaveSettings({ ...settings, clients: next });
+    onSaveSettings(getCurrentSettingsPayload({ clients: next }));
   };
 
   const handleRemoveClient = (client: string) => {
     const next = clients.filter((c) => c !== client);
     setClients(next);
-    onSaveSettings({ ...settings, clients: next });
+    onSaveSettings(getCurrentSettingsPayload({ clients: next }));
   };
 
   const handleAddJob = () => {
@@ -155,13 +167,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const next = [...jobNumbers, newJob.trim()];
     setJobNumbers(next);
     setNewJob('');
-    onSaveSettings({ ...settings, jobNumbers: next });
+    onSaveSettings(getCurrentSettingsPayload({ jobNumbers: next }));
   };
 
   const handleRemoveJob = (job: string) => {
     const next = jobNumbers.filter((j) => j !== job);
     setJobNumbers(next);
-    onSaveSettings({ ...settings, jobNumbers: next });
+    onSaveSettings(getCurrentSettingsPayload({ jobNumbers: next }));
+  };
+
+  const handleAddSite = () => {
+    if (!newSite.trim() || sites.includes(newSite.trim())) return;
+    const next = [...sites, newSite.trim()];
+    setSites(next);
+    setNewSite('');
+    onSaveSettings(getCurrentSettingsPayload({ sites: next }));
+  };
+
+  const handleRemoveSite = (site: string) => {
+    const next = sites.filter((s) => s !== site);
+    setSites(next);
+    onSaveSettings(getCurrentSettingsPayload({ sites: next }));
   };
 
   // Export full JSON backup
@@ -493,13 +519,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* Preset Clients & Job Numbers */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Preset Clients, Job Numbers & Work Sites */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Clients list */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3">
           <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2 border-b border-slate-800 pb-3">
             <Building2 className="w-4 h-4 text-emerald-400" />
-            Client Presets (Autocomplete)
+            Client Presets
           </h3>
 
           <div className="flex gap-2">
@@ -521,18 +547,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           <div className="space-y-1.5 max-h-48 overflow-y-auto pt-1">
-            {clients.map((c) => (
-              <div key={c} className="flex items-center justify-between rounded-lg bg-slate-950/60 px-3 py-1.5 text-xs text-slate-300">
-                <span>{c}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveClient(c)}
-                  className="text-slate-500 hover:text-red-400"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+            {clients.length === 0 ? (
+              <p className="text-[11px] text-slate-500 italic py-2">No custom clients saved yet.</p>
+            ) : (
+              clients.map((c) => (
+                <div key={c} className="flex items-center justify-between rounded-lg bg-slate-950/60 px-3 py-1.5 text-xs text-slate-300">
+                  <span>{c}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveClient(c)}
+                    className="text-slate-500 hover:text-red-400"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -562,18 +592,67 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           <div className="space-y-1.5 max-h-48 overflow-y-auto pt-1">
-            {jobNumbers.map((j) => (
-              <div key={j} className="flex items-center justify-between rounded-lg bg-slate-950/60 px-3 py-1.5 text-xs text-slate-300">
-                <span className="font-mono">{j}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveJob(j)}
-                  className="text-slate-500 hover:text-red-400"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+            {jobNumbers.length === 0 ? (
+              <p className="text-[11px] text-slate-500 italic py-2">No custom jobs saved yet.</p>
+            ) : (
+              jobNumbers.map((j) => (
+                <div key={j} className="flex items-center justify-between rounded-lg bg-slate-950/60 px-3 py-1.5 text-xs text-slate-300">
+                  <span className="font-mono">{j}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveJob(j)}
+                    className="text-slate-500 hover:text-red-400"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Work Sites & Destinations list */}
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-3">
+          <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2 border-b border-slate-800 pb-3">
+            <MapPin className="w-4 h-4 text-blue-400" />
+            Site & Destination Presets
+          </h3>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newSite}
+              onChange={(e) => setNewSite(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSite())}
+              placeholder="e.g. UWC Main Campus..."
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-100 focus:border-blue-500 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={handleAddSite}
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="space-y-1.5 max-h-48 overflow-y-auto pt-1">
+            {sites.length === 0 ? (
+              <p className="text-[11px] text-slate-500 italic py-2">No custom sites saved yet.</p>
+            ) : (
+              sites.map((s) => (
+                <div key={s} className="flex items-center justify-between rounded-lg bg-slate-950/60 px-3 py-1.5 text-xs text-slate-300">
+                  <span className="truncate">{s}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSite(s)}
+                    className="text-slate-500 hover:text-red-400 shrink-0 ml-2"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

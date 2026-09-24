@@ -13,17 +13,20 @@ import {
   ShieldCheck,
   Info,
 } from 'lucide-react';
-import { UserSettings } from '../types';
+import { UserSettings, Trip } from '../types';
 import {
   lookupMapsRoute,
   MapsLookupResult,
   getStoredClientKey,
   saveClientKey,
 } from '../lib/geminiMapsService';
+import { SearchableDropdown } from './SearchableDropdown';
+import { getSiteOptions } from '../lib/autocompleteDefaults';
 
 interface MapsGroundingViewProps {
   settings: UserSettings;
   onLogTripWithRoute: (routeData: { origin: string; destination: string; distanceKm: number; notes: string }) => void;
+  trips?: Trip[];
 }
 
 const COMMON_SITES = [
@@ -41,6 +44,7 @@ const COMMON_SITES = [
 export const MapsGroundingView: React.FC<MapsGroundingViewProps> = ({
   settings,
   onLogTripWithRoute,
+  trips = [],
 }) => {
   const [origin, setOrigin] = useState(settings.region || '');
   const [destination, setDestination] = useState(settings.clients[0] ? `${settings.clients[0]} Site` : '');
@@ -49,6 +53,8 @@ export const MapsGroundingView: React.FC<MapsGroundingViewProps> = ({
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<MapsLookupResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const siteOptions = getSiteOptions(settings, trips);
 
   // Key drawer state for easy configuration on any deployment
   const [apiKeyInput, setApiKeyInput] = useState(getStoredClientKey());
@@ -201,24 +207,26 @@ export const MapsGroundingView: React.FC<MapsGroundingViewProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">Origin Point</label>
-                <input
-                  type="text"
+                <SearchableDropdown
+                  label="Origin Point"
                   value={origin}
-                  onChange={(e) => setOrigin(e.target.value)}
+                  onChange={setOrigin}
+                  options={siteOptions}
                   placeholder="e.g. Home, Office, or street address"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-medium text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+                  accentColor="blue"
+                  allowCustom={true}
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">Destination Work Site</label>
-                <input
-                  type="text"
+                <SearchableDropdown
+                  label="Destination Work Site"
                   value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
+                  onChange={setDestination}
+                  options={siteOptions}
                   placeholder="e.g. UWC Main Campus, SBSA Caledon"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-medium text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+                  accentColor="blue"
+                  allowCustom={true}
                 />
               </div>
             </div>

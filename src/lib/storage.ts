@@ -25,35 +25,19 @@ export const DEFAULT_SETTINGS: UserSettings = {
   sites: [],
 };
 
-// Automatic one-time migration: wipe legacy default data (David Hu, sample trips, default vehicles)
+// Initialize default settings if not set
 function checkAndApplyCleanSlateMigration(): void {
   try {
     const isMigrated = localStorage.getItem(STORAGE_KEYS.CLEAN_SLATE_V3) === 'true';
     if (!isMigrated) {
       const rawSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-      if (rawSettings) {
-        const parsed = JSON.parse(rawSettings);
-        // If settings had the legacy placeholder data, wipe all to clean slate
-        if (
-          parsed.driverName === 'David Hu' ||
-          parsed.vehicleRego === 'CA 842-195' ||
-          parsed.vehicleName === 'Toyota Hilux 4x4'
-        ) {
-          localStorage.setItem(STORAGE_KEYS.TRIPS, JSON.stringify([]));
-          localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify([]));
-          localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
-          localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION);
-          localStorage.removeItem(STORAGE_KEYS.ACTIVE_TRIP);
-        }
-      } else {
-        localStorage.setItem(STORAGE_KEYS.TRIPS, JSON.stringify([]));
-        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify([]));
+      if (!rawSettings) {
         localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
       }
       localStorage.setItem(STORAGE_KEYS.CLEAN_SLATE_V3, 'true');
     }
   } catch (err) {
-    console.error('Error applying clean slate migration:', err);
+    console.error('Error applying initialization check:', err);
   }
 }
 
