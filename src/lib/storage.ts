@@ -21,6 +21,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   employerName: '',
   clients: [],
   jobNumbers: [],
+  sites: [],
 };
 
 // Automatic one-time migration: wipe legacy default data (David Hu, sample trips, default vehicles)

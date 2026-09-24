@@ -75,6 +75,7 @@ export interface UserSettings {
   currentOdometer: number;
   clients: string[];
   jobNumbers: string[];
+  sites?: string[]; // Preset / frequent work sites & destinations
   templateMode?: 'standard' | 'custom';
   cellMapping?: CellMappingConfig;
   taxReferenceNo?: string; // SARS Tax Reference Number
