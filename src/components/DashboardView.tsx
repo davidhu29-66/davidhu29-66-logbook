@@ -164,6 +164,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       )}
 
+      {/* Technician & Fleet Setup Alert Banner (When Unconfigured) */}
+      {(!settings.driverName || !settings.vehicleRego) && (
+        <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 p-4 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                Technician & Vehicle Setup Required
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  Clean Slate
+                </span>
+              </h4>
+              <p className="text-xs text-slate-400 mt-0.5">
+                All placeholder default data has been removed. Set your technician name, vehicle details, odometer, and client presets in Settings.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigateTab('settings')}
+            className="shrink-0 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-colors shadow-md"
+          >
+            <span>Configure Technician Profile</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
         <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-sm backdrop-blur">
@@ -196,19 +226,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </span>
             <span className="text-xs text-slate-400">KM</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            {settings.vehicleName || 'Vehicle active'}
+          <p className="text-[11px] text-slate-500 mt-1 truncate">
+            {settings.vehicleName || settings.vehicleRego || 'Vehicle unconfigured'}
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-sm backdrop-blur">
-          <span className="text-xs font-medium text-slate-400">Driver & Region</span>
+          <span className="text-xs font-medium text-slate-400">Technician & Depot</span>
           <div className="mt-1">
-            <span className="text-base font-bold text-slate-200 block truncate">{settings.driverName}</span>
-            <span className="text-xs text-slate-400 block truncate">{settings.region}</span>
+            <span className="text-base font-bold text-slate-200 block truncate">
+              {settings.driverName || 'Not configured'}
+            </span>
+            <span className="text-xs text-slate-400 block truncate">
+              {settings.region || 'Depot unassigned'}
+            </span>
           </div>
           <p className="text-[11px] text-blue-400/80 mt-1">
-            {calculation.columns.length - 1} clients active
+            {settings.clients?.length || 0} client presets
           </p>
         </div>
       </div>

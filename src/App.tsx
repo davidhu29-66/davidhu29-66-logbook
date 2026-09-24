@@ -355,20 +355,20 @@ export default function App() {
 
   const handleResetSampleData = () => {
     setConfirmModal({
-      title: 'Restore Sample Dataset',
-      message: 'Are you sure you want to restore the official sample fleet dataset (85 trips and work sessions)? Any current custom entries will be replaced.',
-      confirmLabel: 'Restore Sample Data',
+      title: 'Reset to Blank Clean Slate',
+      message: 'Are you sure you want to reset all records to a clean slate? All trips, sessions, and technician settings will be cleared so technicians can configure from scratch.',
+      confirmLabel: 'Reset Database Clean',
       variant: 'warning',
       onConfirm: () => {
         const data = resetToSampleData();
-        setTrips(data.trips);
-        setSessions(data.sessions);
+        setTrips([]);
+        setSessions([]);
         setSettings(data.settings);
         setActiveSessionState(null);
         setActiveTripState(null);
         if (currentUser) {
-          syncAllTripsToFirestore(currentUser.uid, data.trips);
-          syncAllSessionsToFirestore(currentUser.uid, data.sessions);
+          syncAllTripsToFirestore(currentUser.uid, []);
+          syncAllSessionsToFirestore(currentUser.uid, []);
           saveSettingsToFirestore(currentUser.uid, data.settings);
         }
         setConfirmModal(null);
@@ -538,7 +538,7 @@ export default function App() {
               notes: routeData.notes,
               origin: routeData.origin,
               destination: routeData.destination,
-              vehicle: settings.vehicleName || 'Toyota Hilux 4x4',
+              vehicle: settings.vehicleName || '',
               status: 'completed',
               splits: [],
             };

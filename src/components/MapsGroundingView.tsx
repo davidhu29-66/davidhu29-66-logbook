@@ -28,8 +28,8 @@ export const MapsGroundingView: React.FC<MapsGroundingViewProps> = ({
   settings,
   onLogTripWithRoute,
 }) => {
-  const [origin, setOrigin] = useState('Home');
-  const [destination, setDestination] = useState('UWC Main Campus');
+  const [origin, setOrigin] = useState(settings.region || '');
+  const [destination, setDestination] = useState(settings.clients[0] ? `${settings.clients[0]} Site` : '');
   const [customQuery, setCustomQuery] = useState('');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [loading, setLoading] = useState(false);

@@ -87,15 +87,15 @@ export const TripModal: React.FC<TripModalProps> = ({
       setTimeOut(`${currentH}:${currentM}`);
       setTimeIn(`${currentH}:${currentM}`);
       setMileageOut(suggestedOdometerOut || settings.currentOdometer || 0);
-      setMileageIn((suggestedOdometerOut || settings.currentOdometer || 0) + 25);
+      setMileageIn(suggestedOdometerOut || settings.currentOdometer || 0);
       setCategory(defaultCategory);
       setBusinessType(defaultBusinessType);
       setClient(defaultBusinessType === 'admin' ? 'Admin' : (settings.clients[0] || ''));
       setJobNumber(defaultBusinessType === 'admin' ? '' : (settings.jobNumbers[0] || ''));
       setNotes('');
-      setVehicle(settings.vehicleName || 'Toyota Hilux 4x4');
-      setOrigin(settings.region || 'Depot / Office');
-      setDestination(defaultBusinessType === 'admin' ? 'Admin / Depot' : (settings.clients[0] ? `${settings.clients[0]} Site` : ''));
+      setVehicle(settings.vehicleName || '');
+      setOrigin(settings.region || '');
+      setDestination(defaultBusinessType === 'admin' ? 'Admin' : (settings.clients[0] ? `${settings.clients[0]} Site` : ''));
       setEnableSplits(false);
       setSplits([]);
     }
@@ -626,7 +626,7 @@ export const TripModal: React.FC<TripModalProps> = ({
                 type="text"
                 value={vehicle}
                 onChange={(e) => setVehicle(e.target.value)}
-                placeholder="Toyota Hilux 4x4"
+                placeholder="e.g. Ford Ranger / CA 123-456"
                 className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
               />
             </div>

@@ -659,12 +659,12 @@ export const TemplateManagerModal: React.FC<TemplateManagerModalProps> = ({
                     <tr>
                       <td className="py-2 px-3 font-semibold text-white">Driver Name</td>
                       <td className="py-2 px-3 font-mono text-blue-400">{mapping.nameCell}</td>
-                      <td className="py-2 px-3">{settings.driverName || 'David Hu'}</td>
+                      <td className="py-2 px-3">{settings.driverName || 'Technician Name'}</td>
                     </tr>
                     <tr>
                       <td className="py-2 px-3 font-semibold text-white">Region</td>
                       <td className="py-2 px-3 font-mono text-blue-400">{mapping.regionCell}</td>
-                      <td className="py-2 px-3">{settings.region || 'Metro Depot 04'}</td>
+                      <td className="py-2 px-3">{settings.region || 'Operating Depot'}</td>
                     </tr>
                     <tr>
                       <td className="py-2 px-3 font-semibold text-white">Week Ending Date</td>

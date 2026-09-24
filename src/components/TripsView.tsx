@@ -195,15 +195,6 @@ export const TripsView: React.FC<TripsViewProps> = ({
                 <Database className="w-4 h-4 text-blue-400" />
                 Import CSV File
               </button>
-              {onResetSampleData && (
-                <button
-                  type="button"
-                  onClick={onResetSampleData}
-                  className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-all"
-                >
-                  <span>Restore Sample Dataset</span>
-                </button>
-              )}
             </div>
           </div>
         ) : filteredTrips.length === 0 ? (

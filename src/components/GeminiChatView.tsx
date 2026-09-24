@@ -310,7 +310,7 @@ export const GeminiChatView: React.FC<GeminiChatViewProps> = ({ trips, sessions,
         <div className="flex items-center gap-4 flex-wrap">
           <span className="flex items-center gap-1.5 text-slate-300 font-medium">
             <Car className="w-3.5 h-3.5 text-blue-400" />
-            {settings.vehicleName || 'Toyota Hilux'} ({settings.vehicleRego || 'CA 123-456'})
+            {settings.vehicleName || settings.vehicleRego || 'Vehicle unconfigured'} {settings.vehicleRego && settings.vehicleName ? `(${settings.vehicleRego})` : ''}
           </span>
           <span className="font-mono text-slate-300">
             {totalKm.toLocaleString()} Total KM ({bizPct}% Business)

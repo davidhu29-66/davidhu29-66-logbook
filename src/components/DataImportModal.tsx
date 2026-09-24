@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, Upload, FileText, CheckCircle2, AlertTriangle, ArrowRight, RefreshCw, Database, Sparkles, Filter } from 'lucide-react';
 import { Trip, UserSettings } from '../types';
 import { parseCsvTrips, RAW_USER_CSV, ParseCsvResult } from '../lib/csvParser';
-import { importCsvTripsIntoStorage, resetToSampleData } from '../lib/storage';
+import { importCsvTripsIntoStorage } from '../lib/storage';
 
 interface DataImportModalProps {
   isOpen: boolean;
@@ -105,15 +105,6 @@ export const DataImportModal: React.FC<DataImportModalProps> = ({
       setErrorMessage(`Import error: ${err?.message || 'Failed to parse and store CSV'}`);
       setIsProcessing(false);
     }
-  };
-
-  const handleResetToPreloaded = () => {
-    const sample = resetToSampleData();
-    onImportComplete(sample.trips, sample.settings);
-    setSuccessMessage('Official fleet dataset (85 trips) restored.');
-    setTimeout(() => {
-      onClose();
-    }, 600);
   };
 
   // Preview metrics
@@ -450,16 +441,7 @@ export const DataImportModal: React.FC<DataImportModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-4 border-t border-slate-800 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={handleResetToPreloaded}
-            className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Quick-Restore Official Fleet Dataset
-          </button>
-
+        <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
           <div className="flex items-center gap-2">
             <button
               type="button"

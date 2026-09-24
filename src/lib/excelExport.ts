@@ -356,25 +356,25 @@ export async function generateSarsMonthlyExcel(
   const metaRows = [
     {
       c1: 'Full Name:',
-      v1: settings.driverName || 'David Hu',
+      v1: settings.driverName || '',
       c2: 'Make & Model:',
-      v2: settings.vehicleName || 'Toyota Hilux 4x4',
+      v2: settings.vehicleName || '',
     },
     {
       c1: 'ID / Passport No:',
-      v1: settings.idNumber || '8804125089083',
+      v1: settings.idNumber || '',
       c2: 'Registration No:',
-      v2: settings.vehicleRego || 'ABC-492',
+      v2: settings.vehicleRego || '',
     },
     {
       c1: 'Tax Reference No:',
-      v1: settings.taxReferenceNo || '9482716304',
+      v1: settings.taxReferenceNo || '',
       c2: 'Cost Price / Value (ZAR):',
-      v2: settings.vehicleCostPrice ? `R ${settings.vehicleCostPrice.toLocaleString()}` : 'R 385,000',
+      v2: settings.vehicleCostPrice ? `R ${settings.vehicleCostPrice.toLocaleString()}` : '',
     },
     {
       c1: 'Employer / Business:',
-      v1: settings.employerName || settings.region || 'Field Operations Pty Ltd',
+      v1: settings.employerName || settings.region || '',
       c2: 'Log Period / Month:',
       v2: `${summary.monthLabel} (${summary.monthStr})`,
     },

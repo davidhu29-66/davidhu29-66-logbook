@@ -239,20 +239,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <form onSubmit={handleSaveProfile} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-4">
         <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2 border-b border-slate-800 pb-3">
           <User className="w-4 h-4 text-blue-400" />
-          HR-018 Driver & Depot Credentials
+          Technician & Depot Profile (HR-018)
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Driver Full Name (Timesheet Cell B1)
+              Technician Full Name (Timesheet Cell B1)
             </label>
             <input
               type="text"
-              required
               value={driverName}
               onChange={(e) => setDriverName(e.target.value)}
-              placeholder="e.g. Alex Morgan"
+              placeholder="e.g. Alex Morgan / Technician Name"
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
             />
           </div>
@@ -260,14 +259,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 text-slate-400" />
-              Region / Base Depot (Timesheet Cell K1)
+              Operating Region / Depot (Timesheet Cell K1)
             </label>
             <input
               type="text"
-              required
               value={region}
               onChange={(e) => setRegion(e.target.value)}
-              placeholder="e.g. Northern Operations"
+              placeholder="e.g. Western Cape / Field Operations"
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
             />
           </div>
@@ -774,9 +772,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="button"
               onClick={onResetSampleData}
               className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/60 p-3 text-xs font-semibold text-slate-300 hover:bg-slate-700/60 transition-colors"
+              title="Clears all records to an empty blank database"
             >
               <RotateCcw className="w-4 h-4 text-slate-400" />
-              Reset to Sample Data
+              Reset to Clean Blank State
             </button>
           </div>
         </div>

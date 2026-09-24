@@ -268,7 +268,7 @@ export const SarsLogbookView: React.FC<SarsLogbookViewProps> = ({
               Employer / Business
             </span>
             <span className="font-bold text-slate-200 print:text-black">
-              {settings.employerName || settings.region || 'Field Operations'}
+              {settings.employerName || settings.region || 'Not configured'}
             </span>
           </div>
 
@@ -277,7 +277,7 @@ export const SarsLogbookView: React.FC<SarsLogbookViewProps> = ({
               Vehicle Make & Model
             </span>
             <span className="font-bold text-slate-200 print:text-black">
-              {settings.vehicleName || 'Toyota Hilux 4x4'}
+              {settings.vehicleName || 'Not configured'}
             </span>
           </div>
 
@@ -286,7 +286,7 @@ export const SarsLogbookView: React.FC<SarsLogbookViewProps> = ({
               Vehicle Registration No
             </span>
             <span className="font-mono font-bold text-slate-200 print:text-black">
-              {settings.vehicleRego || 'ABC-492'}
+              {settings.vehicleRego || 'Not configured'}
             </span>
           </div>
 
@@ -632,7 +632,7 @@ export const SarsLogbookView: React.FC<SarsLogbookViewProps> = ({
               Taxpayer Signature
             </span>
             <p className="font-bold font-mono mt-1 text-sm">
-              {settings.driverName || 'David Hu'}
+              {settings.driverName || 'Technician / Driver'}
             </p>
           </div>
 
