@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trip, Split, UserSettings, ActivityCategory, BusinessType, WorkSession } from '../types';
 import { X, Plus, Trash2, Gauge, AlertCircle, Calendar, Clock, Car, Building2, Tag, MapPin, Navigation, Sparkles, ExternalLink, Check } from 'lucide-react';
-import { lookupMapsRoute } from '../lib/geminiMapsService';
+import { lookupMapsRoute, getStoredClientKey } from '../lib/geminiMapsService';
 import { SearchableDropdown } from './SearchableDropdown';
 import { getClientOptions, getJobNumberOptions, getSiteOptions, getVehicleOptions } from '../lib/autocompleteDefaults';
 
@@ -61,6 +61,47 @@ export const TripModal: React.FC<TripModalProps> = ({
     mapLinks: Array<{ title: string; uri: string }>;
   } | null>(null);
   const [mapsError, setMapsError] = useState<string | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const apiKey = getStoredClientKey();
+        if (apiKey) {
+          try {
+            const response = await fetch(
+              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
+            );
+            if (response.ok) {
+              const data = await response.json();
+              if (data.results && data.results[0]) {
+                const address = data.results[0].formatted_address;
+                setOrigin(address);
+                setGpsLoading(false);
+                return;
+              }
+            }
+          } catch (err) {
+            console.warn("Reverse geocoding failed, falling back to coordinates:", err);
+          }
+        }
+        setOrigin(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+        setGpsLoading(false);
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        alert(`Failed to get location: ${error.message}`);
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -160,10 +201,28 @@ export const TripModal: React.FC<TripModalProps> = ({
     setMapsLoading(true);
     setMapsError(null);
     try {
+      let userLocation: { latitude: number; longitude: number } | null = null;
+      if (navigator.geolocation) {
+        const pos = await new Promise<GeolocationPosition | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (p) => resolve(p),
+            () => resolve(null),
+            { timeout: 3000 }
+          );
+        });
+        if (pos) {
+          userLocation = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          };
+        }
+      }
+
       const data = await lookupMapsRoute({ 
         origin, 
         destination,
         baseAddress: settings.baseAddress,
+        userLocation,
       });
       setMapsResult(data);
     } catch (err: any) {
@@ -560,9 +619,22 @@ export const TripModal: React.FC<TripModalProps> = ({
           <div className="space-y-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-300 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                    Origin / Departure Point
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={gpsLoading}
+                    className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1 disabled:opacity-40"
+                  >
+                    <MapPin className="w-3 h-3 text-red-400 animate-pulse" />
+                    {gpsLoading ? 'Locating...' : 'Use Current GPS'}
+                  </button>
+                </div>
                 <SearchableDropdown
-                  label="Origin / Departure Point"
-                  icon={<MapPin className="w-3.5 h-3.5 text-blue-400" />}
                   value={origin}
                   onChange={setOrigin}
                   options={siteOptions}
