@@ -3,6 +3,10 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInAnonymously,
+  updateProfile,
   signOut,
   onAuthStateChanged,
   User,
@@ -22,6 +26,10 @@ import {
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Trip, WorkSession, UserSettings } from '../types';
+
+export const FIREBASE_PROJECT_ID = firebaseConfig.projectId;
+export const FIREBASE_AUTH_DOMAIN = firebaseConfig.authDomain;
+export const FIREBASE_AUTHORIZED_DOMAINS_URL = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`;
 
 let app: FirebaseApp;
 if (!getApps().length) {
@@ -46,30 +54,88 @@ export const db: Firestore = firebaseConfig.firestoreDatabaseId
   ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
   : getFirestore(app);
 
+// Helper to save or update user doc in Firestore
+async function recordUserProfile(user: User, customName?: string) {
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    await setDoc(
+      userRef,
+      {
+        id: user.uid,
+        email: user.email || '',
+        displayName: customName || user.displayName || (user.isAnonymous ? 'Guest Driver' : 'User'),
+        photoURL: user.photoURL || '',
+        isAnonymous: Boolean(user.isAnonymous),
+        lastLoginAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+  } catch (err) {
+    console.warn('Could not record user profile to Firestore:', err);
+  }
+}
+
 // Authentication helpers
 export async function signInWithGoogle(): Promise<User> {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    // Record user profile in users collection
     if (result.user) {
-      const userRef = doc(db, 'users', result.user.uid);
-      await setDoc(
-        userRef,
-        {
-          id: result.user.uid,
-          email: result.user.email || '',
-          displayName: result.user.displayName || '',
-          photoURL: result.user.photoURL || '',
-          lastLoginAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
+      await recordUserProfile(result.user);
     }
     return result.user;
   } catch (error: any) {
     console.error('Firebase Google Sign-in error:', error);
     throw error;
   }
+}
+
+export async function signInWithEmail(email: string, pass: string): Promise<User> {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email.trim(), pass);
+    if (result.user) {
+      await recordUserProfile(result.user);
+    }
+    return result.user;
+  } catch (error: any) {
+    console.error('Firebase Email sign-in error:', error);
+    throw error;
+  }
+}
+
+export async function signUpWithEmail(email: string, pass: string, displayName?: string): Promise<User> {
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email.trim(), pass);
+    if (result.user) {
+      if (displayName) {
+        await updateProfile(result.user, { displayName });
+      }
+      await recordUserProfile(result.user, displayName);
+    }
+    return result.user;
+  } catch (error: any) {
+    console.error('Firebase Email sign-up error:', error);
+    throw error;
+  }
+}
+
+export async function signInAsGuest(): Promise<User> {
+  try {
+    const result = await signInAnonymously(auth);
+    if (result.user) {
+      await recordUserProfile(result.user, 'Guest Driver');
+    }
+    return result.user;
+  } catch (error: any) {
+    console.error('Firebase Anonymous sign-in error:', error);
+    throw error;
+  }
+}
+
+export function isUnauthorizedDomainError(error: any): boolean {
+  if (!error) return false;
+  const code = error.code || '';
+  const message = error.message || '';
+  return code === 'auth/unauthorized-domain' || message.includes('unauthorized-domain');
 }
 
 export async function signOutUser(): Promise<void> {

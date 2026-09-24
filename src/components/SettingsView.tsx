@@ -20,6 +20,8 @@ import {
   Sliders,
   CheckCircle2,
   ShieldCheck,
+  Globe,
+  ExternalLink,
 } from 'lucide-react';
 import { TemplateManagerModal } from './TemplateManagerModal';
 import { getCustomExcelTemplate } from '../lib/templateStorage';
@@ -40,6 +42,7 @@ interface SettingsViewProps {
   onSignInWithGoogle?: () => void;
   onSignOut?: () => void;
   onManualSyncCloud?: () => void;
+  onOpenDomainGuide?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -56,6 +59,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onSignInWithGoogle,
   onSignOut,
   onManualSyncCloud,
+  onOpenDomainGuide,
 }) => {
   const [driverName, setDriverName] = useState(settings.driverName);
   const [region, setRegion] = useState(settings.region);
@@ -665,6 +669,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             )}
           </div>
         )}
+
+        {/* Vercel & GitHub Domain Whitelisting Helper */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-blue-950/20 border border-blue-900/40 text-xs text-blue-200">
+          <div className="flex items-start gap-2.5">
+            <Globe className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-blue-100">
+                Deploying on Vercel or GitHub Pages? Fixing "auth/unauthorized-domain"
+              </p>
+              <p className="text-[11px] text-blue-300/80 mt-0.5">
+                Google Sign-in requires adding your domain (e.g. <code className="font-mono text-emerald-300">run.app</code>, <code className="font-mono text-emerald-300">vercel.app</code>, or <code className="font-mono text-emerald-300">github.io</code>) to Authorized Domains in Firebase Console.
+              </p>
+            </div>
+          </div>
+          {onOpenDomainGuide && (
+            <button
+              type="button"
+              onClick={onOpenDomainGuide}
+              className="shrink-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-sm transition-colors"
+            >
+              <span>Domain Whitelist Guide</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Data Management & Backups */}

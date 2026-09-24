@@ -29,6 +29,7 @@ import { DataImportModal } from './components/DataImportModal';
 import { TripModal } from './components/TripModal';
 import { SessionModal } from './components/SessionModal';
 import { ConfirmModal, ConfirmModalProps } from './components/ConfirmModal';
+import { AuthModal } from './components/AuthModal';
 import {
   signInWithGoogle,
   signOutUser,
@@ -75,6 +76,13 @@ export default function App() {
   const [sessionDefaultBiz, setSessionDefaultBiz] = useState<BusinessType>('chargeable');
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalInitialError, setAuthModalInitialError] = useState<string | null>(null);
+
+  const handleOpenAuthModal = (err?: string) => {
+    setAuthModalInitialError(err || null);
+    setIsAuthModalOpen(true);
+  };
 
   // Firebase Auth Subscription and Cloud Data Sync
   useEffect(() => {
@@ -125,19 +133,8 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (err: any) {
-      console.error('Sign-in failed:', err);
-      setConfirmModal({
-        title: 'Sign In Notice',
-        message: `Could not complete Google Sign-in: ${err.message || 'Please ensure popups are enabled.'}`,
-        confirmLabel: 'OK',
-        variant: 'warning',
-        onConfirm: () => setConfirmModal(null),
-      });
-    }
+  const handleGoogleSignIn = () => {
+    handleOpenAuthModal();
   };
 
   const handleGoogleSignOut = async () => {
@@ -576,8 +573,16 @@ export default function App() {
           onSignInWithGoogle={handleGoogleSignIn}
           onSignOut={handleGoogleSignOut}
           onManualSyncCloud={handleManualSyncCloud}
+          onOpenDomainGuide={() => handleOpenAuthModal('auth/unauthorized-domain')}
         />
       )}
+
+      {/* Auth & Domain Setup Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialError={authModalInitialError}
+      />
 
       {/* Data Import Modal */}
       <DataImportModal
