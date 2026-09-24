@@ -6,20 +6,16 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-let aiClient: GoogleGenAI | null = null;
 function getGenAI(): GoogleGenAI {
-  if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY || '';
-    aiClient = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        },
+  const apiKey = process.env.GEMINI_API_KEY || '';
+  return new GoogleGenAI({
+    apiKey,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
       },
-    });
-  }
-  return aiClient;
+    },
+  });
 }
 
 async function startServer() {
@@ -174,7 +170,7 @@ Provide the verified location address, landmark details, and approximate driving
       }
 
       // Determine model based on task complexity
-      let selectedModel = 'gemini-3.5-flash';
+      let selectedModel = 'gemini-3.8-flash';
       if (taskType === 'complex') {
         selectedModel = 'gemini-3.1-pro-preview';
       } else if (taskType === 'fast') {
