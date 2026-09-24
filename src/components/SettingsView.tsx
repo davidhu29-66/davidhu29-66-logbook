@@ -64,11 +64,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onManualSyncCloud,
   onOpenDomainGuide,
 }) => {
-  const [driverName, setDriverName] = useState(settings.driverName);
-  const [region, setRegion] = useState(settings.region);
-  const [vehicleName, setVehicleName] = useState(settings.vehicleName);
-  const [vehicleRego, setVehicleRego] = useState(settings.vehicleRego);
-  const [currentOdometer, setCurrentOdometer] = useState(settings.currentOdometer);
+  const [driverName, setDriverName] = useState(settings.driverName || '');
+  const [region, setRegion] = useState(settings.region || '');
+  const [vehicleName, setVehicleName] = useState(settings.vehicleName || '');
+  const [vehicleRego, setVehicleRego] = useState(settings.vehicleRego || '');
+  const [currentOdometer, setCurrentOdometer] = useState<number | string>(settings.currentOdometer ?? 0);
   const [taxReferenceNo, setTaxReferenceNo] = useState(settings.taxReferenceNo || '');
   const [idNumber, setIdNumber] = useState(settings.idNumber || '');
   const [vehicleCostPrice, setVehicleCostPrice] = useState(settings.vehicleCostPrice ? String(settings.vehicleCostPrice) : '');
@@ -91,7 +91,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [keySavedMessage, setKeySavedMessage] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const initialLoadDone = useRef(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const isDirty = useRef(false);
 
   useEffect(() => {
     getCustomExcelTemplate().then((res) => {
@@ -99,13 +100,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     });
   }, [settings.templateMode]);
 
+  // Synchronize when settings change externally (e.g. cloud login) if user hasn't made unsaved edits
   useEffect(() => {
-    if (!initialLoadDone.current) {
+    if (!isDirty.current) {
       setDriverName(settings.driverName || '');
       setRegion(settings.region || '');
       setVehicleName(settings.vehicleName || '');
       setVehicleRego(settings.vehicleRego || '');
-      setCurrentOdometer(settings.currentOdometer || 0);
+      setCurrentOdometer(settings.currentOdometer ?? 0);
       setTaxReferenceNo(settings.taxReferenceNo || '');
       setIdNumber(settings.idNumber || '');
       setVehicleCostPrice(settings.vehicleCostPrice ? String(settings.vehicleCostPrice) : '');
@@ -114,7 +116,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setClients(settings.clients || []);
       setJobNumbers(settings.jobNumbers || []);
       setSites(settings.sites || []);
-      initialLoadDone.current = true;
     }
   }, [settings]);
 
@@ -141,11 +142,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     ...overrides,
   });
 
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updated = getCurrentSettingsPayload();
-    onSaveSettings(updated);
-    showToast('Driver profile and SARS settings saved successfully.');
+  const handleSaveProfile = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSaveStatus('saving');
+    try {
+      const updated = getCurrentSettingsPayload();
+      await onSaveSettings(updated);
+      isDirty.current = false;
+      setSaveStatus('saved');
+      showToast('Settings saved successfully to local storage & cloud database!');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      setSaveStatus('idle');
+      showToast('Error syncing to cloud, but saved locally.', 'error');
+    }
   };
 
   const handleAddClient = () => {
@@ -255,24 +266,57 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Title */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-          <Settings className="w-5 h-5 text-blue-400" />
-          Settings & HR-018 Configuration
-        </h2>
-        <p className="text-xs text-slate-400 mt-0.5">
-          Driver identity metadata, vehicles, client presets and data management
-        </p>
+    <div className="space-y-6 max-w-4xl relative">
+      {/* Title & Top Save Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-800/80">
+        <div>
+          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-blue-400" />
+            Settings & HR-018 Configuration
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Driver identity metadata, vehicles, client presets and data management
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => handleSaveProfile()}
+          disabled={saveStatus === 'saving'}
+          className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all shadow-md self-start sm:self-auto ${
+            saveStatus === 'saved'
+              ? 'bg-emerald-600 text-white hover:bg-emerald-500'
+              : saveStatus === 'saving'
+              ? 'bg-blue-600/70 text-blue-200 cursor-wait'
+              : 'bg-blue-600 text-white hover:bg-blue-500 hover:shadow-blue-500/20'
+          }`}
+        >
+          {saveStatus === 'saved' ? (
+            <>
+              <CheckCircle2 className="w-4 h-4 text-emerald-100" />
+              Settings Saved!
+            </>
+          ) : saveStatus === 'saving' ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Saving Settings...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-4 h-4 text-blue-200" />
+              Save Settings
+            </>
+          )}
+        </button>
       </div>
 
+      {/* Floating Toast Notification */}
       {toast && (
         <div
-          className={`flex items-center gap-2 rounded-xl p-3 text-xs ${
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3 text-xs font-semibold shadow-2xl backdrop-blur-md transition-all ${
             toast.type === 'success'
-              ? 'border border-emerald-500/40 bg-emerald-950/40 text-emerald-300'
-              : 'border border-red-500/40 bg-red-950/40 text-red-300'
+              ? 'border border-emerald-500 bg-slate-900/95 text-emerald-300 shadow-emerald-950/60'
+              : 'border border-red-500 bg-slate-900/95 text-red-300 shadow-red-950/60'
           }`}
         >
           {toast.type === 'success' ? (
@@ -299,7 +343,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <input
               type="text"
               value={driverName}
-              onChange={(e) => setDriverName(e.target.value)}
+              onChange={(e) => {
+                isDirty.current = true;
+                setDriverName(e.target.value);
+              }}
               placeholder="e.g. Alex Morgan / Technician Name"
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
             />
@@ -313,7 +360,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <input
               type="text"
               value={region}
-              onChange={(e) => setRegion(e.target.value)}
+              onChange={(e) => {
+                isDirty.current = true;
+                setRegion(e.target.value);
+              }}
               placeholder="e.g. Western Cape / Field Operations"
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
             />
@@ -327,7 +377,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <input
               type="text"
               value={vehicleName}
-              onChange={(e) => setVehicleName(e.target.value)}
+              onChange={(e) => {
+                isDirty.current = true;
+                setVehicleName(e.target.value);
+              }}
               placeholder="e.g. Toyota Hilux 4x4 WorkMate"
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
             />
@@ -340,7 +393,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <input
               type="text"
               value={vehicleRego}
-              onChange={(e) => setVehicleRego(e.target.value)}
+              onChange={(e) => {
+                isDirty.current = true;
+                setVehicleRego(e.target.value);
+              }}
               placeholder="e.g. 1ABC-889"
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
             />
@@ -354,7 +410,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <input
               type="text"
               value={baseAddress}
-              onChange={(e) => setBaseAddress(e.target.value)}
+              onChange={(e) => {
+                isDirty.current = true;
+                setBaseAddress(e.target.value);
+              }}
               placeholder="e.g. 77 Somerset Rd, Green Point, Cape Town, 8005"
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
             />
@@ -369,9 +428,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </label>
             <input
               type="number"
-              step="1"
+              step="any"
               value={currentOdometer}
-              onChange={(e) => setCurrentOdometer(Number(e.target.value))}
+              onChange={(e) => {
+                isDirty.current = true;
+                setCurrentOdometer(e.target.value === '' ? '' : Number(e.target.value));
+              }}
               placeholder="148500"
               className="w-full md:w-1/2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
             />
@@ -394,7 +456,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <input
                   type="text"
                   value={taxReferenceNo}
-                  onChange={(e) => setTaxReferenceNo(e.target.value)}
+                  onChange={(e) => {
+                    isDirty.current = true;
+                    setTaxReferenceNo(e.target.value);
+                  }}
                   placeholder="e.g. 9482716304"
                   className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 font-mono focus:border-blue-500 focus:outline-none"
                 />
@@ -407,7 +472,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <input
                   type="text"
                   value={idNumber}
-                  onChange={(e) => setIdNumber(e.target.value)}
+                  onChange={(e) => {
+                    isDirty.current = true;
+                    setIdNumber(e.target.value);
+                  }}
                   placeholder="e.g. 8804125089083"
                   className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 font-mono focus:border-blue-500 focus:outline-none"
                 />
@@ -419,9 +487,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </label>
                 <input
                   type="number"
-                  step="1000"
+                  step="any"
                   value={vehicleCostPrice}
-                  onChange={(e) => setVehicleCostPrice(e.target.value)}
+                  onChange={(e) => {
+                    isDirty.current = true;
+                    setVehicleCostPrice(e.target.value);
+                  }}
                   placeholder="e.g. 385000"
                   className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 font-mono focus:border-blue-500 focus:outline-none"
                 />
@@ -437,7 +508,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <input
                   type="text"
                   value={employerName}
-                  onChange={(e) => setEmployerName(e.target.value)}
+                  onChange={(e) => {
+                    isDirty.current = true;
+                    setEmployerName(e.target.value);
+                  }}
                   placeholder="e.g. Field Operations Pty Ltd"
                   className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
                 />
@@ -448,10 +522,33 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         <div className="pt-2 flex justify-end">
           <button
-            type="submit"
-            className="rounded-lg bg-blue-600 px-5 py-2 text-xs font-semibold text-white shadow-md hover:bg-blue-500 transition-colors"
+            type="button"
+            onClick={() => handleSaveProfile()}
+            disabled={saveStatus === 'saving'}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all shadow-md ${
+              saveStatus === 'saved'
+                ? 'bg-emerald-600 text-white hover:bg-emerald-500'
+                : saveStatus === 'saving'
+                ? 'bg-blue-600/70 text-blue-200 cursor-wait'
+                : 'bg-blue-600 text-white hover:bg-blue-500 hover:shadow-blue-500/20'
+            }`}
           >
-            Save Profile Settings
+            {saveStatus === 'saved' ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-100" />
+                Settings Saved!
+              </>
+            ) : saveStatus === 'saving' ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Saving Settings...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 text-blue-200" />
+                Save Settings
+              </>
+            )}
           </button>
         </div>
       </form>

@@ -345,11 +345,11 @@ export default function App() {
     setIsTripModalOpen(true);
   };
 
-  const handleSaveSettings = (newSettings: UserSettings) => {
+  const handleSaveSettings = async (newSettings: UserSettings) => {
     setSettings(newSettings);
     saveUserSettings(newSettings);
     if (currentUser) {
-      saveSettingsToFirestore(currentUser.uid, newSettings);
+      await saveSettingsToFirestore(currentUser.uid, newSettings);
     }
   };
 

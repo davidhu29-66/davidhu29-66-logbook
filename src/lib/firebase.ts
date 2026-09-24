@@ -14,6 +14,7 @@ import {
 } from 'firebase/auth';
 import {
   getFirestore,
+  initializeFirestore,
   collection,
   doc,
   setDoc,
@@ -50,9 +51,18 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 // Initialize Firestore with specific database ID if provided, otherwise default
-export const db: Firestore = firebaseConfig.firestoreDatabaseId
-  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(app);
+// Using experimentalAutoDetectLongPolling prevents backend connection dropped errors in iframe/proxy environments
+let initializedDb: Firestore;
+try {
+  initializedDb = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+  }, firebaseConfig.firestoreDatabaseId || undefined);
+} catch {
+  initializedDb = firebaseConfig.firestoreDatabaseId
+    ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+    : getFirestore(app);
+}
+export const db: Firestore = initializedDb;
 
 // Helper to save or update user doc in Firestore
 async function recordUserProfile(user: User, customName?: string) {
