@@ -47,10 +47,28 @@ export const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
-  // Normalize options to DropdownOption format
-  const normalizedOptions: DropdownOption[] = options.map((opt) =>
-    typeof opt === 'string' ? { label: opt, value: opt } : opt
-  );
+  // Normalize options to DropdownOption format and filter out duplicates or empty items
+  const normalizedOptions: DropdownOption[] = (() => {
+    const uniqueList: DropdownOption[] = [];
+    const seen = new Set<string>();
+    options.forEach((opt) => {
+      if (!opt) return;
+      const parsed = typeof opt === 'string' ? { label: opt, value: opt } : opt;
+      if (!parsed.value || !parsed.value.trim()) return;
+      
+      const lower = parsed.value.toLowerCase().trim();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        uniqueList.push({
+          label: parsed.label.trim(),
+          value: parsed.value.trim(),
+          badge: parsed.badge,
+          hint: parsed.hint,
+        });
+      }
+    });
+    return uniqueList;
+  })();
 
   // Filter options based on user text (case-insensitive)
   const filteredOptions = normalizedOptions.filter((opt) =>

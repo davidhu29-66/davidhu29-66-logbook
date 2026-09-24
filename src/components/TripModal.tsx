@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Trip, Split, UserSettings, ActivityCategory, BusinessType } from '../types';
+import { Trip, Split, UserSettings, ActivityCategory, BusinessType, WorkSession } from '../types';
 import { X, Plus, Trash2, Gauge, AlertCircle, Calendar, Clock, Car, Building2, Tag, MapPin, Navigation, Sparkles, ExternalLink, Check } from 'lucide-react';
 import { lookupMapsRoute } from '../lib/geminiMapsService';
+import { SearchableDropdown } from './SearchableDropdown';
+import { getClientOptions, getJobNumberOptions, getSiteOptions, getVehicleOptions } from '../lib/autocompleteDefaults';
 
 interface TripModalProps {
   isOpen: boolean;
@@ -12,6 +14,8 @@ interface TripModalProps {
   settings: UserSettings;
   defaultCategory?: ActivityCategory;
   defaultBusinessType?: BusinessType;
+  trips?: Trip[];
+  sessions?: WorkSession[];
 }
 
 export const TripModal: React.FC<TripModalProps> = ({
@@ -23,6 +27,8 @@ export const TripModal: React.FC<TripModalProps> = ({
   settings,
   defaultCategory = 'business',
   defaultBusinessType = 'chargeable',
+  trips = [],
+  sessions = [],
 }) => {
   const [date, setDate] = useState('');
   const [timeOut, setTimeOut] = useState('08:00');
@@ -40,6 +46,12 @@ export const TripModal: React.FC<TripModalProps> = ({
   const [enableSplits, setEnableSplits] = useState(false);
   const [splits, setSplits] = useState<Split[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-complete lists
+  const clientOptions = getClientOptions(settings, trips, sessions);
+  const jobOptions = getJobNumberOptions(settings, trips, sessions);
+  const siteOptions = getSiteOptions(settings, trips);
+  const vehicleOptions = getVehicleOptions(settings, trips);
 
   // Maps Grounding state
   const [mapsLoading, setMapsLoading] = useState(false);
@@ -367,46 +379,28 @@ export const TripModal: React.FC<TripModalProps> = ({
           {/* Client & Job Number (when single allocation) */}
           {category === 'business' && !enableSplits && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                  Client Name
-                </label>
-                <input
-                  type="text"
-                  list="clients-list"
-                  disabled={businessType === 'admin'}
-                  value={client}
-                  onChange={(e) => setClient(e.target.value)}
-                  placeholder="e.g. Acme Corp"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 disabled:opacity-50 focus:border-blue-500 focus:outline-none"
-                />
-                <datalist id="clients-list">
-                  {settings.clients.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
-                  <Tag className="w-3.5 h-3.5 text-slate-400" />
-                  Job Number
-                </label>
-                <input
-                  type="text"
-                  list="jobs-list"
-                  disabled={businessType === 'admin'}
-                  value={jobNumber}
-                  onChange={(e) => setJobNumber(e.target.value)}
-                  placeholder="e.g. J-2024-88"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 disabled:opacity-50 focus:border-blue-500 focus:outline-none"
-                />
-                <datalist id="jobs-list">
-                  {settings.jobNumbers.map((j) => (
-                    <option key={j} value={j} />
-                  ))}
-                </datalist>
-              </div>
+              <SearchableDropdown
+                label="Client Name"
+                icon={<Building2 className="w-3.5 h-3.5 text-slate-400" />}
+                disabled={businessType === 'admin'}
+                value={client}
+                onChange={setClient}
+                options={clientOptions}
+                placeholder="e.g. Acme Corp"
+                accentColor="blue"
+                allowCustom={true}
+              />
+              <SearchableDropdown
+                label="Job Number"
+                icon={<Tag className="w-3.5 h-3.5 text-slate-400" />}
+                disabled={businessType === 'admin'}
+                value={jobNumber}
+                onChange={setJobNumber}
+                options={jobOptions}
+                placeholder="e.g. J-2024-88"
+                accentColor="blue"
+                allowCustom={true}
+              />
             </div>
           )}
 
@@ -460,22 +454,26 @@ export const TripModal: React.FC<TripModalProps> = ({
                         <option value="admin">Admin</option>
                       </select>
 
-                      <input
-                        type="text"
-                        placeholder="Client"
-                        value={s.businessType === 'admin' ? 'Admin' : s.client}
+                      <SearchableDropdown
+                        compact={true}
                         disabled={s.businessType === 'admin'}
-                        onChange={(e) => handleUpdateSplit(s.id, 'client', e.target.value)}
-                        className="rounded border border-slate-700 bg-slate-950 text-xs px-2 py-1 flex-1 min-w-[90px] text-slate-100 disabled:opacity-50"
+                        value={s.businessType === 'admin' ? 'Admin' : s.client}
+                        onChange={(val) => handleUpdateSplit(s.id, 'client', val)}
+                        options={clientOptions}
+                        placeholder="Client"
+                        accentColor="blue"
+                        className="flex-1 min-w-[120px]"
                       />
 
-                      <input
-                        type="text"
-                        placeholder="Job #"
-                        value={s.businessType === 'admin' ? '' : s.jobNumber}
+                      <SearchableDropdown
+                        compact={true}
                         disabled={s.businessType === 'admin'}
-                        onChange={(e) => handleUpdateSplit(s.id, 'jobNumber', e.target.value)}
-                        className="rounded border border-slate-700 bg-slate-950 text-xs px-2 py-1 w-24 text-slate-100 disabled:opacity-50"
+                        value={s.businessType === 'admin' ? '' : s.jobNumber}
+                        onChange={(val) => handleUpdateSplit(s.id, 'jobNumber', val)}
+                        options={jobOptions}
+                        placeholder="Job #"
+                        accentColor="blue"
+                        className="w-28"
                       />
 
                       <div className="flex items-center gap-1">
@@ -522,24 +520,23 @@ export const TripModal: React.FC<TripModalProps> = ({
           <div className="space-y-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-blue-400" />
-                  Origin / Departure Point
-                </label>
-                <input
-                  type="text"
+                <SearchableDropdown
+                  label="Origin / Departure Point"
+                  icon={<MapPin className="w-3.5 h-3.5 text-blue-400" />}
                   value={origin}
-                  onChange={(e) => setOrigin(e.target.value)}
+                  onChange={setOrigin}
+                  options={siteOptions}
                   placeholder="e.g. Home or Office"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
+                  accentColor="blue"
+                  allowCustom={true}
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center justify-between">
-                  <span className="flex items-center gap-1">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-300 flex items-center gap-1">
                     <Navigation className="w-3.5 h-3.5 text-emerald-400" />
                     Destination / Work Site
-                  </span>
+                  </label>
                   <button
                     type="button"
                     onClick={handleVerifyWithMaps}
@@ -549,13 +546,14 @@ export const TripModal: React.FC<TripModalProps> = ({
                     <Sparkles className="w-3 h-3" />
                     {mapsLoading ? 'Checking Maps...' : 'Verify on Google Maps'}
                   </button>
-                </label>
-                <input
-                  type="text"
+                </div>
+                <SearchableDropdown
                   value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
+                  onChange={setDestination}
+                  options={siteOptions}
                   placeholder="e.g. UWC Main Campus or SBSA Caledon"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
+                  accentColor="blue"
+                  allowCustom={true}
                 />
               </div>
             </div>
@@ -613,13 +611,14 @@ export const TripModal: React.FC<TripModalProps> = ({
           {/* Notes and Vehicle */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Vehicle / Rego</label>
-              <input
-                type="text"
+              <SearchableDropdown
+                label="Vehicle / Rego"
                 value={vehicle}
-                onChange={(e) => setVehicle(e.target.value)}
+                onChange={setVehicle}
+                options={vehicleOptions}
                 placeholder="e.g. Ford Ranger / CA 123-456"
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none"
+                accentColor="blue"
+                allowCustom={true}
               />
             </div>
             <div>

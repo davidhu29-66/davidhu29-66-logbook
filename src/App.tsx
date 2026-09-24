@@ -608,6 +608,8 @@ export default function App() {
         settings={settings}
         defaultCategory={tripDefaultCat}
         defaultBusinessType={tripDefaultBiz}
+        trips={trips}
+        sessions={sessions}
       />
 
       {/* Session Modal */}
@@ -619,6 +621,8 @@ export default function App() {
         settings={settings}
         defaultCategory={sessionDefaultCat}
         defaultBusinessType={sessionDefaultBiz}
+        trips={trips}
+        sessions={sessions}
       />
 
       {/* In-App Confirmation Modal (Safe for Sandboxed Iframes) */}
